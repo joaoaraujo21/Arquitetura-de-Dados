@@ -1,0 +1,1 @@
+"""Gold layer: Business-ready aggregated data."""

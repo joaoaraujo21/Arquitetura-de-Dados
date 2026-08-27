@@ -1,0 +1,125 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: openrouteraula-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: dataeng
+      POSTGRES_PASSWORD: dataeng
+      POSTGRES_DB: dataeng
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/ddl:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dataeng -d dataeng"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  warehouse:
+    image: postgres:16
+    container_name: openrouteraula-warehouse
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: dataeng
+      POSTGRES_PASSWORD: dataeng
+      POSTGRES_DB: warehouse
+    ports:
+      - "5433:5432"
+    volumes:
+      - warehouse_data:/var/lib/postgresql/data
+      - ./sql/ddl:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dataeng -d warehouse"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: openrouteraula-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  airflow:
+    image: apache/airflow:2.8.3
+    container_name: openrouteraula-airflow
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://dataeng:dataeng@postgres:5432/airflow
+      AIRFLOW__CELERY__BROKER_URL: redis://redis:6379/0
+      AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql+psycopg2://dataeng:dataeng@postgres:5432/airflow
+      AIRFLOW__CORE__FERNET_KEY: ""
+      AIRFLOW__API__AUTH_BACKEND: airflow.api.auth.backend.basic_auth
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+      _PIP_ADDITIONAL_REQUIREMENTS: "great-expectations==0.18.12"
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./plugins:/opt/airflow/plugins
+    ports:
+      - "8080:8080"
+    command: ["bash", "-c", "airflow db migrate && airflow users create --name admin --role Admin --email admin@airflow.com --username admin --password admin && airflow scheduler & airflow webserver"]
+
+  # ───── Observability ─────
+  prometheus:
+    image: prom/prometheus:v2.50.1
+    container_name: openrouteraula-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/prometheus/alerts.yml:/etc/prometheus/rules/alerts.yml
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--storage.tsdb.retention.time=200h"
+      - "--web.enable-lifecycle"
+
+  grafana:
+    image: grafana/grafana-enterprise:10.3.5
+    container_name: openrouteraula-grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    depends_on:
+      - prometheus
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: openrouteraula-pgadmin
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
+volumes:
+  postgres_data:
+  warehouse_data:
+  grafana_data:
+  pgadmin_data:
+
+networks:
+  default:
+    name: openrouteraula-net

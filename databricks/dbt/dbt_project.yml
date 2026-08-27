@@ -1,0 +1,38 @@
+# dbt project configuration for Databricks
+name: openrouter_dbt
+version: "1.0"
+config-version: 2
+
+profile: openrouter_databricks
+
+model-paths: ["models"]
+analysis-paths: ["analysis"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_modules"
+
+models:
+  openrouter_dbt:
+    +schema: silver
+    +materialized: view
+    staging:
+      +schema: silver
+      +materialized: incremental
+      +incremental_strategy: append
+    marts:
+      +schema: gold
+      +materialized: table
+      +post-hook: "CALL spark_catalog.system.compute_table_stats(TABLE {{ this }}, FALSE)"
+
+seeds:
+  openrouter_dbt:
+    +schema: bronze
+    +quote_columns: false
+
+snapshots:
+  openrouter_dbt:
+    +schema: bronze

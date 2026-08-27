@@ -1,0 +1,88 @@
+# ───── Python ─────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.venv/
+venv/
+env/
+ENV/
+.python-version
+
+# ───── Environment ─────
+.env
+.env.local
+.env.*.local
+*.envrc
+
+# ───── IDEs ─────
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ───── Claude Code (IDE local config, contains API keys) ─────
+.claude/settings.local.json
+
+# ───── Data ─────
+data/raw/*
+data/processed/*
+data/external/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/external/.gitkeep
+
+# ───── Logs ─────
+logs/
+*.log
+*.log.*
+
+# ───── Terraform ─────
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+
+# ───── Kubernetes ─────
+.k8s/secrets/
+
+# ───── Notebooks ─────
+.ipynb_checkpoints/
+
+# ───── Database ─────
+*.db
+*.sqlite
+*.sqlite3
+*.parquet
+*.avro
+
+# ───── OS ─────
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+
+# ───── Big Data / Spark ─────
+metastore_db/
+spark-warehouse/
+derby.log
+
+# ───── Airflow ─────
+airflow.db
+airflow.cfg
+airflow-webserver.pid

@@ -1,0 +1,34 @@
+# dbt profile configuration for Databricks
+# This file should be encrypted or stored securely
+# Copy to ~/.dbt/profiles.yml or use environment variable
+
+openrouter_databricks:
+  target: prod
+  outputs:
+    dev:
+      type: databricks
+      host: ${env:DATABRICKS_HOST}
+      token: ${env:DATABRICKS_TOKEN}
+      catalog: openrouter_catalog
+      schema: silver_dev
+      threads: 4
+      workspace_root_path: /Workspace/openrouter
+      http_path: /sql/1.0/warehouses/<warehouse_id>
+
+    staging:
+      type: databricks
+      host: ${env:DATABRICKS_HOST}
+      token: ${env:DATABRICKS_TOKEN}
+      catalog: openrouter_catalog
+      schema: silver_staging
+      threads: 8
+      http_path: /sql/1.0/warehouses/<warehouse_id>
+
+    prod:
+      type: databricks
+      host: ${env:DATABRICKS_HOST}
+      token: ${env:DATABRICKS_TOKEN}
+      catalog: openrouter_catalog
+      schema: silver
+      threads: 16
+      http_path: /sql/1.0/warehouses/<warehouse_id>

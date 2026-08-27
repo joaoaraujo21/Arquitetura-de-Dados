@@ -1,0 +1,1 @@
+{"name":"Arquitetura-de-Dados","description":"Estrutura de projeto para engenharia de dados com suporte a Databricks (Notebooks, DLT, dbt, Unity Catalog) e execucao local (PostgreSQL, Airflow) seguindo arquitetura medalhao (Bronze/Silver/Gold)","private":false}
